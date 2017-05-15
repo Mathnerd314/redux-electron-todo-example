@@ -1,21 +1,20 @@
-import React from 'react';
+import React from 'react'
 
-import TodoList from '../containers/todo-list';
-import TodoAppBar from '../containers/todo-appbar';
+import TodoList from '../containers/todo-list'
+import TodoAppBar from '../containers/todo-appbar'
 
-import Paper from 'material-ui/lib/paper';
+import Paper from 'material-ui/lib/paper'
 
 const styles = {
-    textAlign: 'center'
-};
+  textAlign: 'center'
+}
 
 export default class Main extends React.Component {
-
-  constructor(props) {
-    super(props);
+  constructor (props) {
+    super(props)
   }
 
-  render() {
+  render () {
     return (
       <div style={styles}>
         <Paper zDepth={2}>
@@ -23,7 +22,6 @@ export default class Main extends React.Component {
           <TodoList />
         </Paper>
       </div>
-    );
+    )
   }
 }
-

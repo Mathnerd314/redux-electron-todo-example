@@ -1,13 +1,27 @@
 {
   "parserOptions": {
+    "sourceType": "module",
     "ecmaVersion": 6,
     "ecmaFeatures": {
       "jsx": true
     }
   },
+  "rules": {
+    "react/prop-types": "off",
+    "react/jsx-space-before-closing" : "off",
+    "react/jsx-tag-spacing" : [ "error", {
+      closingSlash : "never",
+      beforeSelfClosing : "always",
+      afterOpening : "never",
+    }]
+  },
+  "env": {
+      "browser": true,
+      "node": true
+  },
   "globals": {
     "React": false
   },
-  "extends": ["standard", "standard-jsx"],
+  "extends": ["standard", "standard-react"],
   "plugins": ["react"]
 }

@@ -1,22 +1,29 @@
 'use strict'
+/* eslint-disable no-console */
 
 const gulp = require('gulp')
-const source = require('vinyl-source-stream')
-const browserify = require('browserify')
-const glob = require('glob')
-const es = require('event-stream')
-const babel = require('gulp-babel')
-const sass = require('gulp-sass')
-const eslint = require('gulp-eslint')
-const rename = require('gulp-rename')
-const useref = require('gulp-useref')
-const replace = require('gulp-replace')
-const electron = require('electron-connect').server.create()
+
 const electronPackager = require('gulp-atom-electron')
+const babel = require('gulp-babel')
+const eslint = require('gulp-eslint')
+const prettify = require('gulp-jsbeautifier')
+const rename = require('gulp-rename')
+const replace = require('gulp-replace')
+const sass = require('gulp-sass')
 const symdest = require('gulp-symdest')
+const useref = require('gulp-useref')
 const zip = require('gulp-vinyl-zip')
 
-const electronVersion = require('electron-prebuilt/package.json').version
+const browserify = require('browserify')
+const electron = require('electron-connect').server.create()
+const es = require('event-stream')
+const fs = require('fs')
+const glob = require('glob')
+const reporter = require('eslint-html-reporter')
+const source = require('vinyl-source-stream')
+const path = require('path')
+
+const electronVersion = require('electron/package.json').version
 
 /* These are the building tasks! */
 
@@ -26,7 +33,7 @@ gulp.task('build-client-bundles', (done) => {
 
     let tasks = files.map((entry) => {
       return browserify({ entries: [entry] })
-        .transform('babelify', { presets: [ 'es2015', 'react' ] })
+        .transform('babelify', { presets: ['es2015', 'react'] })
         .bundle()
         .pipe(source(entry))
         .pipe(rename({
@@ -142,37 +149,17 @@ gulp.task('watch-server', () => {
 
 gulp.task('watch', ['watch-client', 'watch-server'])
 
-/* These are the linting tasks! */
+/* Lint */
 
-gulp.task('lint-client', (done) => {
-  glob('./app/**/*.js', (err, files) => {
-    if (err) done(err)
-
-    let tasks = files.map((entry) => {
-      return gulp.src(entry)
-        .pipe(eslint())
-        .pipe(eslint.format())
-    })
-
-    es.merge(tasks).on('end', done)
-  })
+gulp.task('lint', () => {
+  return gulp.src(['./app/**/*', './src/**/*', './gulpfile.js', './.jsbeautifyrc', './.eslintrc', './.babelrc'], { base: './' })
+    .pipe(prettify())
+    .pipe(eslint({ fix: true }))
+    .pipe(eslint.format(reporter, function (results) {
+      fs.writeFileSync(path.join(__dirname, 'lint-results.html'), results)
+    }))
+    .pipe(gulp.dest('./'))
 })
-
-gulp.task('lint-server', (done) => {
-  glob('./src/**/*.js', (err, files) => {
-    if (err) done(err)
-
-    let tasks = files.map((entry) => {
-      return gulp.src(entry)
-        .pipe(eslint())
-        .pipe(eslint.format())
-    })
-
-    es.merge(tasks).on('end', done)
-  })
-})
-
-gulp.task('lint', ['lint-client', 'lint-server'])
 
 /* This is the serve task! */
 
