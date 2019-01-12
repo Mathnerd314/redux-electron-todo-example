@@ -2,7 +2,7 @@
 
 const electron = require('electron')
 // Interprocess communication so that React can communicate with Electron.
-const ipc = require('ipc')
+const ipc = electron.ipcMain
 // Module to control application life.
 const app = electron.app
 const dialog = electron.dialog
@@ -12,6 +12,8 @@ const Menu = electron.Menu
 // Module to create native browser window.
 const BrowserWindow = electron.BrowserWindow
 
+const { default: installExtension, REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } = require('electron-devtools-installer');
+
 const path = require('path')
 const fs = require('fs')
 // Keep a global reference of the window object, if you don't, the window will
@@ -19,14 +21,24 @@ const fs = require('fs')
 let mainWindow
 
 let createWindow = () => {
+
+  console.log('Hello, browser process');
   // Create the browser window.
   mainWindow = new BrowserWindow({
     minWidth: 400,
-    minHeight: 700,
-    transparent: true,
-    frame: false
+    minHeight: 700
   })
 
+  installExtension(REACT_DEVELOPER_TOOLS)
+      .then((name) => console.log(`Added Extension:  ${name}`))
+      .catch((err) => console.log('An error occurred: ', err));
+
+  installExtension(REDUX_DEVTOOLS)
+      .then((name) => console.log(`Added Extension:  ${name}`))
+      .catch((err) => console.log('An error occurred: ', err));
+
+      mainWindow.webContents.openDevTools()
+  
   // and load the index.html of the app.
   mainWindow.loadURL(path.join('file://', __dirname, '/index.html'))
 
@@ -53,6 +65,7 @@ let createWindow = () => {
   {
     label: 'close',
     click: function handleClicked () {
+      console.log('quit');
       app.quit()
     }
   }
@@ -66,9 +79,30 @@ let createWindow = () => {
   tray.setContextMenu(contextMenu)
 }
 
-ipc.on('close-main-window', function () {
+// This method will be called when Electron has finished
+// initialization and is ready to create browser windows.
+app.on('ready', createWindow)
+
+// Quit when all windows are closed.
+app.on('window-all-closed', () => {
   app.quit()
 })
+
+app.on('activate', () => {
+  // On OS X it's common to re-create a window in the app when the
+  // dock icon is clicked and there are no other windows open.
+  if (mainWindow === null) {
+    createWindow()
+  }
+})
+
+ipc.on('close-main-window', function () {
+  // Respect the OSX convention of having the application in memory even
+  // after all windows have been closed
+  if (process.platform !== 'darwin') {
+      console.log('quit');
+    app.quit();
+}})
 
 ipc.on('minimize', function () {
   mainWindow.minimize()
@@ -84,23 +118,4 @@ ipc.on('export-to-pdf', function () {
     filters: [{ name: 'PDF Files', extensions: ['pdf'] }]
   })
 })
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-app.on('ready', createWindow)
 
-// Quit when all windows are closed.
-app.on('window-all-closed', () => {
-  // On OS X it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-})
-
-app.on('activate', () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (mainWindow === null) {
-    createWindow()
-  }
-})
